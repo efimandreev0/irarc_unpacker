@@ -28,7 +28,40 @@ namespace IARC
                     return;
                 }
             }
+            else
+            {
+                Build(args[0]);
+                return;
+            }
         }
+        public static void Build(string inputDirectory)
+        {
+            string[] files = Directory.GetFiles(inputDirectory, "*.vap", SearchOption.TopDirectoryOnly);
+
+            using (BinaryWriter tocWriter = new BinaryWriter(File.OpenWrite(inputDirectory + ".irlst")))
+            using (BinaryWriter arcWriter = new BinaryWriter(File.Create(inputDirectory + ".irarc")))
+
+            {
+                tocWriter.Write(files.Length);
+                for (int i = 0; i < files.Length; i++)
+                {
+                    byte[] file = File.ReadAllBytes(files[i]);
+                    tocWriter.Write(file.Length);
+                    tocWriter.BaseStream.Position = 4;
+                    arcWriter.Write(file);
+                }
+                for (int i = 0; i < files.Length; i++)
+                {
+
+                    Console.WriteLine("packed " + files[i]);
+                    tocWriter.BaseStream.Position = 4;
+                    tocWriter.Write((int)arcWriter.BaseStream.Position);
+                }
+
+            }
+
+        }
+
             public static void Extract(string archive, string table)
         {
             var reader = new BinaryReader(File.OpenRead(table));
