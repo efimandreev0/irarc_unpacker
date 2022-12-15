@@ -37,32 +37,26 @@ namespace IARC
         public static void Build(string inputDirectory)
         {
             string[] files = Directory.GetFiles(inputDirectory, "*.vap", SearchOption.TopDirectoryOnly);
-
             using (BinaryWriter tocWriter = new BinaryWriter(File.OpenWrite(inputDirectory + ".irlst")))
             using (BinaryWriter arcWriter = new BinaryWriter(File.Create(inputDirectory + ".irarc")))
-
             {
                 tocWriter.Write(files.Length);
                 for (int i = 0; i < files.Length; i++)
                 {
+                    //Запись в архив
                     byte[] file = File.ReadAllBytes(files[i]);
-                    tocWriter.Write(file.Length);
-                    tocWriter.BaseStream.Position = 4;
+                    int ptr = (int)arcWriter.BaseStream.Position;
                     arcWriter.Write(file);
+                    //Запись в toc
+                    tocWriter.BaseStream.Position += 4;
+                    tocWriter.Write(ptr);
+                    tocWriter.Write(file.Length);
+                    tocWriter.BaseStream.Position += 4;
                 }
-                for (int i = 0; i < files.Length; i++)
-                {
-
-                    Console.WriteLine("packed " + files[i]);
-                    tocWriter.BaseStream.Position = 4;
-                    tocWriter.Write((int)arcWriter.BaseStream.Position);
-                }
-
             }
-
         }
 
-            public static void Extract(string archive, string table)
+        public static void Extract(string archive, string table)
         {
             var reader = new BinaryReader(File.OpenRead(table));
             Int32 count = reader.ReadInt32();
@@ -86,7 +80,7 @@ namespace IARC
             {
                 reader.BaseStream.Position = dataOffset[i];
                 byte[] data = reader.ReadBytes(dataSize[i]);
-                File.WriteAllBytes(outPath + i + ".vap", data);
+                File.WriteAllBytes(outPath + i.ToString("D5") + ".vap", data);
             }
         }
     }
